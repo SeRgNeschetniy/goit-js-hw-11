@@ -1,11 +1,10 @@
 import './css/styles.css';
 import fetchImages from './fetchImages';
+import { pixbayAPI } from './fetchImages';
 import Notiflix from 'notiflix';
 
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
-
-let page = 1;
 
 const refs = {
   searchForm: document.querySelector('#search-form'),
@@ -13,24 +12,49 @@ const refs = {
   gallery: document.querySelector('.gallery'),
 };
 
+loadMoreDisable();
+
 refs.searchForm.addEventListener('submit', onSearchForm);
 refs.loadMoreBtn.addEventListener('click', onSearchForm);
 
+const updateUi = data => {
+  clearGallery();
+  Notiflix.Notify.info(`Hooray! We found ${data?.totalHits} images.`);
+};
+
+var lightbox = new SimpleLightbox('.gallery a', {
+  captionDelay: 250,
+  captionsData: 'alt',
+  captions: true,
+});
+
+const imageSearch = new pixbayAPI();
+
 function onSearchForm(e) {
   e.preventDefault();
-  const searchQuery = refs.searchForm.searchQuery.value.trim();
 
-  fetchImages(searchQuery, page)
+  imageSearch.searchQuery = refs.searchForm.searchQuery.value.trim();
+
+  imageSearch
+    .getImages()
     .then(data => {
-      clearGallery();
-      console.log(data.hits);
+      if (e.type === 'submit') {
+        updateUi(data);
+      }
+
       renderImages(data.hits);
 
-      var lightbox = new SimpleLightbox('.gallery a', {
-        captionDelay: 250,
-        captionsData: 'alt',
-        captions: true,
-      });
+      lightbox.refresh();
+
+      imageSearch.incrementPage();
+      if (imageSearch.page > Math.ceil(data?.totalHits / 40)) {
+        loadMoreDisable();
+        Notiflix.Notify.info(
+          "We're sorry, but you've reached the end of search results."
+        );
+      } else {
+        loadMoreEnable();
+      }
     })
     .catch(error => {
       clearGallery();
@@ -38,28 +62,26 @@ function onSearchForm(e) {
         'Sorry, there are no images matching your search query. Please try again.'
       );
     })
-    .finally(() => {
-      page += 1;
-    });
+    .finally(() => {});
 }
 
 const renderImages = data => {
-  clearGallery();
-  refs.gallery.innerHTML = createGallery(data);
+  refs.gallery.innerHTML += createGalleryCards(data);
 };
 
-const createGallery = data => {
-  return data.map(
-    ({
-      webformatURL,
-      largeImageURL,
-      tags,
-      likes,
-      views,
-      comments,
-      downloads,
-    }) =>
-      `<a class="photo-card" href="${largeImageURL}">
+const createGalleryCards = data => {
+  return data
+    ?.map(
+      ({
+        webformatURL,
+        largeImageURL,
+        tags,
+        likes,
+        views,
+        comments,
+        downloads,
+      }) =>
+        `<a class="photo-card" href="${largeImageURL}">
         <img class="photo-card__img" src="${webformatURL}" alt="${tags}" loading="lazy" />
           <div class="photo-card__info">
             <p class="info-item">
@@ -76,9 +98,18 @@ const createGallery = data => {
             </p>
           </div>
         </a>`
-  );
+    )
+    .join('');
 };
 
 function clearGallery() {
   refs.gallery.innerHTML = '';
+}
+
+function loadMoreDisable() {
+  refs.loadMoreBtn.setAttribute('hidden', true);
+}
+
+function loadMoreEnable() {
+  refs.loadMoreBtn.removeAttribute('hidden');
 }
