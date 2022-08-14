@@ -19,7 +19,7 @@ refs.loadMoreBtn.addEventListener('click', onSearchForm);
 
 const updateUi = data => {
   clearGallery();
-  Notiflix.Notify.info(`Hooray! We found ${data?.totalHits} images.`);
+  Notiflix.Notify.success(`Hooray! We found ${data?.totalHits} images.`);
 };
 
 var lightbox = new SimpleLightbox('.gallery a', {
@@ -52,6 +52,15 @@ function onSearchForm(e) {
         Notiflix.Notify.info(
           "We're sorry, but you've reached the end of search results."
         );
+
+        const { height: cardHeight } = document
+          .querySelector('.gallery')
+          .firstElementChild.getBoundingClientRect();
+
+        window.scrollBy({
+          top: cardHeight * 2,
+          behavior: 'smooth',
+        });
       } else {
         loadMoreEnable();
       }
@@ -107,9 +116,9 @@ function clearGallery() {
 }
 
 function loadMoreDisable() {
-  refs.loadMoreBtn.setAttribute('hidden', true);
+  refs.loadMoreBtn.classList.add('hidden');
 }
 
 function loadMoreEnable() {
-  refs.loadMoreBtn.removeAttribute('hidden');
+  refs.loadMoreBtn.classList.remove('hidden');
 }
