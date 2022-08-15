@@ -1,6 +1,6 @@
 import './css/styles.css';
-import fetchImages from './fetchImages';
 import { pixbayAPI } from './fetchImages';
+import { createGalleryCards } from './cardTpl';
 import Notiflix from 'notiflix';
 
 import SimpleLightbox from 'simplelightbox';
@@ -32,6 +32,10 @@ const imageSearch = new pixbayAPI();
 
 function onSearchForm(e) {
   e.preventDefault();
+
+  if (e.type === 'submit') {
+    imageSearch.reset();
+  }
 
   imageSearch.searchQuery = refs.searchForm.searchQuery.value.trim();
 
@@ -76,39 +80,6 @@ function onSearchForm(e) {
 
 const renderImages = data => {
   refs.gallery.innerHTML += createGalleryCards(data);
-};
-
-const createGalleryCards = data => {
-  return data
-    ?.map(
-      ({
-        webformatURL,
-        largeImageURL,
-        tags,
-        likes,
-        views,
-        comments,
-        downloads,
-      }) =>
-        `<a class="photo-card" href="${largeImageURL}">
-        <img class="photo-card__img" src="${webformatURL}" alt="${tags}" loading="lazy" />
-          <div class="photo-card__info">
-            <p class="info-item">
-              <b>Likes: ${likes}</b>
-            </p>
-            <p class="info-item">
-              <b>Views: ${views}</b>
-            </p>
-            <p class="info-item">
-              <b>Comments: ${comments}</b>
-            </p>
-            <p class="info-item">
-              <b>Downloads: ${downloads}</b>
-            </p>
-          </div>
-        </a>`
-    )
-    .join('');
 };
 
 function clearGallery() {

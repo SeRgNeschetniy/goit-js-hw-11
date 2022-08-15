@@ -44,6 +44,10 @@ export class pixbayAPI {
     return this.#page;
   }
 
+  reset() {
+    this.#page = 1;
+  }
+
   async getImages() {
     const url = `${this.#BASE_URL}?key=${this.#API_KEY}&q=${
       this.#searchQuery
